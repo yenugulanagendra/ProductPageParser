@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <!-- bean definitions here -->
+
+    <alias name="defaultProductFacade" alias="productFacade"/>
+    <bean id="defaultProductFacade" class="uk.co.sainsbury.test.facade.impl.DefaultProductFacade"/>
+
+    <alias name="defaultProductService" alias="productService"/>
+    <bean id="defaultProductService" class="uk.co.sainsbury.test.service.tests.DefaultProductService"/>
+
+
+</beans>
