@@ -7,7 +7,7 @@ public class ProductData
 {
     private String title;
     private String size;
-    private String unit_price;
+    private String unitPrice;
     private String description;
 
 
@@ -27,12 +27,12 @@ public class ProductData
         this.size = size;
     }
 
-    public String getUnit_price() {
-        return unit_price;
+    public String getUnitPrice() {
+        return unitPrice;
     }
 
-    public void setUnit_price(final String unit_price) {
-        this.unit_price = unit_price;
+    public void setUnitPrice(final String unitPrice) {
+        this.unitPrice = unitPrice;
     }
 
     public String getDescription() {

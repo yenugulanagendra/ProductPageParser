@@ -22,11 +22,11 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="true" />
-        <module name="ProductPageParser" />
+        <module name="uk.co.sainsbury.test" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="ProductPageParser" target="1.5" />
+      <module name="uk.co.sainsbury.test" target="1.7" />
     </bytecodeTargetLevel>
   </component>
 </project>

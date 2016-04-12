@@ -14,10 +14,12 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import uk.co.sainsbury.test.data.ProductData;
 import uk.co.sainsbury.test.data.ProductUrlData;
 import uk.co.sainsbury.test.data.Results;
 import uk.co.sainsbury.test.expection.ProductException;
 import uk.co.sainsbury.test.service.ProductService;
+import uk.co.sainsbury.test.service.impl.DefaultProductService;
 
 
 /**
@@ -80,9 +82,9 @@ public class ProductServiceTest
 	public void parse_urls_with_no_results() throws Exception
 	{
 
-		final Results results = productService.parseProductUrls(Collections.<ProductUrlData> emptyList());
+		final List<ProductData> results = productService.parseProductUrls(Collections.<ProductUrlData> emptyList());
 
-		Assert.assertTrue("No Results are returned ", results.getResults().size() == 0);
+		Assert.assertTrue("No Results are returned ", results.size() == 0);
 	}
 
 
@@ -94,9 +96,9 @@ public class ProductServiceTest
 		productUrlData.setUrl(INVALID_URL);
 		productUrlDatas.add(productUrlData);
 
-		final Results results = productService.parseProductUrls(productUrlDatas);
+		final List<ProductData> productDatas = productService.parseProductUrls(productUrlDatas);
 
-		Assert.assertTrue("No Results are returned ", results.getResults().size() == 0);
+		Assert.assertTrue("No Results are returned ", productDatas.size() == 0);
 	}
 
 
@@ -107,9 +109,8 @@ public class ProductServiceTest
 
         Assert.assertTrue("Valid URL which has products information", (productUrlsFromCategory.size() > 0));
 
-        final Results results = productService.parseProductUrls(productUrlsFromCategory);
+        final  List<ProductData> productDatas  = productService.parseProductUrls(productUrlsFromCategory);
 
-        Assert.assertNotNull(results);
-        Assert.assertTrue(results.getResults().size()>0);
+        Assert.assertNotNull(productDatas);
     }
 }

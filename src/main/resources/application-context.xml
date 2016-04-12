@@ -1,16 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:schemaLocation="
-        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+           http://www.springframework.org/schema/context/spring-context.xsd"
+       xmlns:jaxws="http://cxf.apache.org/jaxws">
+
 
     <!-- bean definitions here -->
+    <context:component-scan base-package="uk.co.sainsbury" />
 
     <alias name="defaultProductFacade" alias="productFacade"/>
     <bean id="defaultProductFacade" class="uk.co.sainsbury.test.facade.impl.DefaultProductFacade"/>
 
     <alias name="defaultProductService" alias="productService"/>
-    <bean id="defaultProductService" class="uk.co.sainsbury.test.service.tests.DefaultProductService"/>
+    <bean id="defaultProductService" class="uk.co.sainsbury.test.service.impl.DefaultProductService"/>
 
-
+    <alias name="defaultJsonBuilderService" alias="jsonBuilderService"/>
+    <bean id="defaultJsonBuilderService" class="uk.co.sainsbury.test.service.impl.DefaultJsonBuilderService"/>
 </beans>
