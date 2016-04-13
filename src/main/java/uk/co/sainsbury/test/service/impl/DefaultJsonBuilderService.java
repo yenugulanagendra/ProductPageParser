@@ -18,24 +18,10 @@ import uk.co.sainsbury.test.service.JsonBuilderService;
 public class DefaultJsonBuilderService implements JsonBuilderService
 {
 	@Override
-	public String buildJsonObject(final List<ProductData> productDatas)
+	public String buildJsonObject(final Results results)
 	{
 
 		String writeValueAsString = null;
-
-        if(CollectionUtils.isEmpty(productDatas))
-        {
-            return null;
-        }
-		Results results = new Results();
-
-		double totalAmt = 0.0;
-		for (ProductData productData : productDatas)
-		{
-			totalAmt += Double.valueOf(productData.getUnitPrice()).doubleValue();
-		}
-		results.setTotal(String.format("%.2f", totalAmt));
-        results.setResults(productDatas);
 
 		ObjectMapper mapper = new ObjectMapper();
 

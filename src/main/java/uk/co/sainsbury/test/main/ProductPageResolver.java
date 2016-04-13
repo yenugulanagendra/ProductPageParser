@@ -1,5 +1,8 @@
 package uk.co.sainsbury.test.main;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.List;
 
 import org.springframework.boot.CommandLineRunner;
@@ -7,7 +10,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import uk.co.sainsbury.test.data.ProductData;
-import uk.co.sainsbury.test.data.ProductUrlData;
+import uk.co.sainsbury.test.data.Results;
 import uk.co.sainsbury.test.service.JsonBuilderService;
 import uk.co.sainsbury.test.service.ProductService;
 
@@ -16,65 +19,58 @@ import uk.co.sainsbury.test.service.ProductService;
  * Product Page Resolver using Spring boot
  */
 @SpringBootApplication
-public class ProductPageResolver implements CommandLineRunner
-{
+public class ProductPageResolver implements CommandLineRunner {
 
-	@Override
-	public void run(final String... args) throws Exception
-	{
-		String urlString = "";
-		if (args != null && args.length > 0)
-		{
-			urlString = args[0];
-		}
+    @Override
+    public void run(final String... args) throws Exception {
+        String inputUrl = "";
+        if (args != null && args.length > 0) {
+            inputUrl = args[0];
+        }
 
-		if (urlString.isEmpty())
-		{
-			System.out.println("Please provide a valid URL ...to get product details ");
-		}
-		else
-		{
+        if (inputUrl.isEmpty() || validateUrl(inputUrl)) {
+            System.out.println("Please provide a valid URL or might be unable to connect with Url ");
+        } else {
 
-			AppContext appContext = AppContext.getInstance();
-			final ProductService productService = appContext.getProductServiceBean();
-			final JsonBuilderService jsonBuilderService = appContext.getJsonBuilderServiceBean();
-			try
-			{
+            AppContext appContext = AppContext.getInstance();
+            final ProductService productService = appContext.getProductServiceBean();
+            final JsonBuilderService jsonBuilderService = appContext.getJsonBuilderServiceBean();
+            try {
 
-				final List<ProductUrlData> productUrls = productService.getProductUrlsFromCategory(urlString);
+                final List<ProductData> productDatas = productService.getProductDataFromURL(inputUrl);
+                Results results = productService.calculateTotalsOfProductDatas(productDatas);
 
-				if (productUrls.size() > 0)
-				{
-					final List<ProductData> productDatas = productService.parseProductUrls(productUrls);
+                if (productDatas.size() > 0) {
+                    jsonBuilderService.buildJsonObject(results);
+                } else {
+                    System.out.println("Specified product url is either invalid or has no products");
+                }
 
-					if (productDatas.size() > 0)
-					{
-						jsonBuilderService.buildJsonObject(productDatas);
-					}
-					else
-					{
-						System.out.println("No products found with supplied url");
-					}
-				}
-				else
-				{
-					System.out.println("Specified product url is either invalid or has no products");
-				}
+            } catch (IllegalStateException e) {
+                System.err.println("Error: An Error has occured while trying to get details of Product Page");
+            } catch (Exception e) {
+                System.err.println("An Error has occured while trying to get details of Product Page" + e.getMessage());
+            }
+        }
+    }
 
-			}
-			catch (IllegalStateException e)
-			{
-				System.err.println("Error: An Error has occured while trying to get details of Product Page");
-			}
-			catch (Exception e)
-			{
-				System.err.println("An Error has occured while trying to get details of Product Page" + e.getMessage());
-			}
-		}
-	}
 
-	public static void main(String[] args) throws Exception
-	{
-		SpringApplication.run(ProductPageResolver.class, args);
-	}
+    public static void main(String[] args) throws Exception {
+        SpringApplication.run(ProductPageResolver.class, args);
+    }
+
+
+    private boolean validateUrl(final String inputUrl) {
+        boolean isValidUrl = false;
+        try {
+            URL url = new URL(inputUrl);
+            url.openConnection();
+            isValidUrl = true;
+        } catch (MalformedURLException e) {
+            isValidUrl = false;
+        } catch (IOException e) {
+            isValidUrl = false;
+        }
+        return isValidUrl;
+    }
 }

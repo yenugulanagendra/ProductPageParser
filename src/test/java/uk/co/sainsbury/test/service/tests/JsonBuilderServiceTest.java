@@ -13,6 +13,7 @@ import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import uk.co.sainsbury.test.data.ProductData;
+import uk.co.sainsbury.test.data.Results;
 import uk.co.sainsbury.test.service.JsonBuilderService;
 import uk.co.sainsbury.test.service.impl.DefaultJsonBuilderService;
 
@@ -35,10 +36,9 @@ public class JsonBuilderServiceTest
 	@Test
 	public void check_when_no_products_available()
 	{
-		final String jsonObject = jsonBuilderService.buildJsonObject(Collections.<ProductData> emptyList());
+		final String jsonObject = jsonBuilderService.buildJsonObject(new Results());
 
-		Assert.assertNull(jsonObject);
-
+		Assert.assertNotNull(jsonObject);
 	}
 
     @Test
@@ -59,7 +59,10 @@ public class JsonBuilderServiceTest
         productData.setUnitPrice("1.11");
         productDataList.add(productData);
 
-        final String jsonObject = jsonBuilderService.buildJsonObject(productDataList);
+        Results results = new Results();
+        results.setResults(productDataList);
+
+        final String jsonObject = jsonBuilderService.buildJsonObject(results);
 
         Assert.assertNotNull(jsonObject);
 

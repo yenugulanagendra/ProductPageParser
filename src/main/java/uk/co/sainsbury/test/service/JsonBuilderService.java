@@ -1,6 +1,7 @@
 package uk.co.sainsbury.test.service;
 
 import uk.co.sainsbury.test.data.ProductData;
+import uk.co.sainsbury.test.data.Results;
 
 import java.util.List;
 
@@ -9,5 +10,10 @@ import java.util.List;
  */
 public interface JsonBuilderService
 {
-    String buildJsonObject(List<ProductData> productDatas);
+    /**
+     * Builds Json Object from Results
+     * @param result
+     * @return
+     */
+    String buildJsonObject(Results result);
 }

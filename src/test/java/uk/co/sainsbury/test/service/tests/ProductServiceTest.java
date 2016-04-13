@@ -1,13 +1,8 @@
 package uk.co.sainsbury.test.service.tests;
 
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import junit.framework.Assert;
-
 import org.jsoup.Jsoup;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,11 +10,13 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import uk.co.sainsbury.test.data.ProductData;
-import uk.co.sainsbury.test.data.ProductUrlData;
 import uk.co.sainsbury.test.data.Results;
 import uk.co.sainsbury.test.expection.ProductException;
 import uk.co.sainsbury.test.service.ProductService;
 import uk.co.sainsbury.test.service.impl.DefaultProductService;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -47,70 +44,69 @@ public class ProductServiceTest
 	}
 
 
-	@Test(expected = ProductException.class)
-	public void validate_url() throws Exception
-	{
-		productService.getProductUrlsFromCategory(INVALID_URL);
-	}
+    @Test(expected = RuntimeException.class)
+    public void when_execption_is_thrown__exception() throws ProductException
+    {
+        productService.getProductDataFromURL(INVALID_URL);
+    }
 
+    @Test
+    public void test_valid_products() throws ProductException
+    {
+        final List<ProductData> productDataFromURL = productService.getProductDataFromURL(VALID_URL);
 
-	@Test
-	public void valid_url_doesnot_have_any_product() throws Exception
-	{
-		final List<ProductUrlData> productUrlsFromCategory = productService.getProductUrlsFromCategory(VALID_URL_NO_PRODUCTS);
-
-		Assert.assertEquals("Valid URL with no products", 0, productUrlsFromCategory.size());
-	}
-
-
-	@Test
-	public void validUrl_with_product_information() throws Exception
-	{
-		final List<ProductUrlData> productUrlsFromCategory = productService.getProductUrlsFromCategory(VALID_URL);
-
-		Assert.assertTrue("Valid URL which has products information", (productUrlsFromCategory.size() > 0));
-
-		DefaultProductService defaultProductService = new DefaultProductService();
-		for (ProductUrlData productUrlData : productUrlsFromCategory)
-		{
-			Assert.assertFalse(defaultProductService.isUrlInValid(productUrlData.getUrl()));
-		}
-	}
-
-
-	@Test
-	public void parse_urls_with_no_results() throws Exception
-	{
-
-		final List<ProductData> results = productService.parseProductUrls(Collections.<ProductUrlData> emptyList());
-
-		Assert.assertTrue("No Results are returned ", results.size() == 0);
-	}
-
-
-	@Test
-	public void parse_urls_with_invalid_urls() throws Exception
-	{
-		List<ProductUrlData> productUrlDatas = new ArrayList<ProductUrlData>();
-		ProductUrlData productUrlData = new ProductUrlData();
-		productUrlData.setUrl(INVALID_URL);
-		productUrlDatas.add(productUrlData);
-
-		final List<ProductData> productDatas = productService.parseProductUrls(productUrlDatas);
-
-		Assert.assertTrue("No Results are returned ", productDatas.size() == 0);
-	}
+        Assert.assertTrue("Size of productData ",productDataFromURL.size()>0);
+        Assert.assertNotNull(productDataFromURL.get(0).getDescription());
+        Assert.assertNotNull(productDataFromURL.get(0).getSize());
+        Assert.assertNotNull(productDataFromURL.get(0).getTitle());
+        Assert.assertNotNull(productDataFromURL.get(0).getUnitPrice());
+    }
 
 
     @Test
-    public void parse_urls_with_valid_products() throws Exception
+    public void calculate_product_totals()
     {
-        final List<ProductUrlData> productUrlsFromCategory = productService.getProductUrlsFromCategory(VALID_URL);
+        List<ProductData> productDataList = new ArrayList<ProductData>();
+        ProductData productData = new ProductData();
+        productData.setDescription("Ripe Fruits");
+        productData.setSize("1.33");
+        productData.setTitle("Avacado");
+        productData.setUnitPrice("1.85");
+        productDataList.add(productData);
 
-        Assert.assertTrue("Valid URL which has products information", (productUrlsFromCategory.size() > 0));
+        productData = new ProductData();
+        productData.setDescription("Ripe Fruits");
+        productData.setSize("0.1234");
+        productData.setTitle("Avacado");
+        productData.setUnitPrice("1.10");
+        productDataList.add(productData);
 
-        final  List<ProductData> productDatas  = productService.parseProductUrls(productUrlsFromCategory);
+        final Results results = productService.calculateTotalsOfProductDatas(productDataList);
 
-        Assert.assertNotNull(productDatas);
+        Assert.assertNotNull(results);
+        Assert.assertEquals("Total amount of all products",String.valueOf(2.95),results.getTotal());
+
     }
+
+    @Test(expected = NumberFormatException.class)
+    public void calcualtion_totals_throws_number_format_exception()
+    {
+        List<ProductData> productDataList = new ArrayList<ProductData>();
+        ProductData productData = new ProductData();
+        productData.setDescription("Ripe Fruits");
+        productData.setSize("1.33");
+        productData.setTitle("Avacado");
+        productData.setUnitPrice("1.85ff");
+        productDataList.add(productData);
+
+        productData = new ProductData();
+        productData.setDescription("Ripe Fruits");
+        productData.setSize("0.1234");
+        productData.setTitle("Avacado");
+        productData.setUnitPrice("1.10ff");
+        productDataList.add(productData);
+
+        productService.calculateTotalsOfProductDatas(productDataList);
+    }
+
 }

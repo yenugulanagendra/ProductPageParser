@@ -1,37 +1,22 @@
 ProductPageParser Test Readme.
 
-Java Application to parse Product Page.
-
-1. Application has ProductParserMain page interacting with different layers.
-2. Service layer
-3. Service layer where business logic is performed.
-
 Software Prerequisites
-============
+----------------------
 1. JDK 1.7 plus
 2. maven 3.x
 3. Firefox browser driver
 4. Git
 
 
-Maven Path Setting:
+Description :
+------------
+A console Java/Spring Boot application that parses a webpage by loading the url at runtime with dynamic content and creates a JSON Object as output.
 
-Unix:
- export M2_HOME=<Installation_director>
- export PATH=$PATH:$M2_HOME/bin
-
- Open terminal to test : mvn -version
-
-Windows:
-
- Open Environment variables
-   M2_HOME=<Installation_director>
-   PATH =<Add_to_end_of_existing_path>;%M2_HOME%/bin
-
-Open cmd/terminal to test : mvn -version
-
-About Application:
-
+- SpringBoot commandline Runner is used to load the webpage url through argument line.
+- Maven dependency management for loading the dependent jar files.
+- Application uses webdriver selenium java firefox to load the webpage as pagesource and parsed through Jsoup API.
+- ProductService parses the webpage and returns product data object.
+- JsonBuilderService creates the JSON Object.
 
 1. Open terminal or cmd.
 2. Make sure Java & Maven are in path.

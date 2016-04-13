@@ -1,21 +1,18 @@
 package uk.co.sainsbury.test.service.impl;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
+import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
 
 import uk.co.sainsbury.test.data.ProductData;
-import uk.co.sainsbury.test.data.ProductUrlData;
 import uk.co.sainsbury.test.data.Results;
 import uk.co.sainsbury.test.expection.ProductException;
 import uk.co.sainsbury.test.service.ProductService;
@@ -27,134 +24,149 @@ import uk.co.sainsbury.test.service.ProductService;
 public class DefaultProductService implements ProductService
 {
 
-    private static final String PRODUCT_INFO = ".productInfo";
-    private static final String PRODUCT_NAME_AND_PROMOTIONS = ".productNameAndPromotions";
-    private static final String H_3 = "h3";
-    private static final String A = "a";
-    private static final String IMG = "img";
+	private static final String PRODUCT = "product";
+	private static final String PRODUCT_INNER = "productInner";
+	private static final String ANCHOR_TAG = "h3 > a";
+	private static final String HREF = "href";
+	public static final String PRODUCT_TEXT = "productText";
+	public static final String PRICE_PER_UNIT = "pricePerUnit";
+	public static final String UNIT = "/unit";
+	public static final String KB = " kb";
 
-    public List<ProductUrlData> getProductUrlsFromCategory(final String url) throws ProductException
+	public List<ProductData> getProductDataFromURL(final String url) throws ProductException
 	{
-		if (isUrlInValid(url))
-		{
-			throw new ProductException("Invalid Url, Please give a valid url");
-		}
-		WebDriver webDriver = new FirefoxDriver();
-		List<ProductUrlData> noOfProductUrls = new ArrayList<ProductUrlData>();
+		List<ProductData> productDatas = new ArrayList<ProductData>();
 		try
 		{
-			webDriver.get(url);
+			WebDriver parentFireFoxDriver = new FirefoxDriver();
+			parentFireFoxDriver.get(url);
 
-			final String pageSource = webDriver.getPageSource();
+			//To load the page
+			Thread.sleep(5000);
 
-			final Document document = Jsoup.parse(pageSource);
-
-			Elements productList = document.select("div#productLister").select("li");
-			for (int i = 0; i < productList.size(); i++)
+			// get elements from page
+			List<WebElement> elements = getListOfProducts(parentFireFoxDriver);
+			for (WebElement webElement : elements)
 			{
-				boolean insertData = false;
-				ProductUrlData productUrlData = new ProductUrlData();
-				Element ele = productList.get(i);
-				Elements anchorElement = ele.select(PRODUCT_INFO).select(PRODUCT_NAME_AND_PROMOTIONS).select(H_3).select(A);
-				if (anchorElement.size() > 0)
-				{
-					productUrlData.setUrl(anchorElement.attr("href"));
-					insertData = true;
-				}
-				Elements imageElement = ele.select(PRODUCT_INFO).select(PRODUCT_NAME_AND_PROMOTIONS).select(H_3).select(A).select(IMG);
-				if (imageElement.size() > 0)
-				{
+				ProductData productData = new ProductData();
+				WebElement productInner = webElement.findElement(By.className(PRODUCT_INNER));
 
-					final String src = imageElement.attr("src");
-					URL imageUrl = new URL(src);
-					int size = imageUrl.openConnection().getContentLength() / 1024;
-					productUrlData.setSize(String.valueOf(size) + "kb");
-					insertData = true;
-				}
-				if (insertData)
-				{
-					noOfProductUrls.add(productUrlData);
-				}
+				String unitPrice = getUnitPrice(productInner);
+				productData.setUnitPrice(unitPrice);
+
+				WebElement anchor = productInner.findElement(By.cssSelector(ANCHOR_TAG));
+				String title = anchor.getText();
+				productData.setTitle(title);
+
+				WebDriver childFireFoxDriver = new FirefoxDriver();
+				childFireFoxDriver.get(anchor.getAttribute(HREF));
+
+				// To load the page
+				Thread.sleep(5000);
+
+				final String sizeOfFile = getProductImageFileSize(childFireFoxDriver);
+				productData.setSize(sizeOfFile);
+
+				final String description = childFireFoxDriver.findElement(By.className(PRODUCT_TEXT)).getText();
+				productData.setDescription(description);
+
+                childFireFoxDriver.quit();
+                parentFireFoxDriver.quit();
+
+				productDatas.add(productData);
 			}
-
+		}
+		catch (InterruptedException e)
+		{
+			System.err.println("Oops!! Something went wrong while to load the page.");
+            throw new ProductException("Oops!! Something went wrong while to load the page.");
 		}
 		catch (IOException ioe)
 		{
-			throw new ProductException("Something went wrong, Please try again");
-		}
-		finally
-		{
-			webDriver.close();
-        }
-
-		return noOfProductUrls;
-
-	}
-
-
-	public List<ProductData> parseProductUrls(final List<ProductUrlData> productUrls) throws ProductException
-	{
-        List<ProductData> productDatas = new ArrayList<ProductData>();
-        try
-		{
-			for (ProductUrlData productUrl : productUrls)
-			{
-				ProductData productData = new ProductData();
-				if (isUrlInValid(productUrl.getUrl()))
-				{
-					continue; // If any urls are invalid, then continue to next process.
-				}
-
-                WebDriver webDriver = new FirefoxDriver();
-                webDriver.get(productUrl.getUrl());
-				final Document document = Jsoup.parse(webDriver.getPageSource());
-
-				final String title = document.select("div.productTitleDescriptionContainer").select("h1").text();
-				productData.setTitle(title);
-				final String priceUnit = document.select("div.pricing").select("p.pricePerUnit").text();
-				final String priceValue = priceUnit.replace("£", "").replace("/unit", "");
-				productData.setUnitPrice(priceValue);
-				final String description = document.select("div.productText").select("p").get(0).select("p").text();
-				productData.setDescription(description);
-				productData.setSize(productUrl.getSize());
-				productDatas.add(productData);
-                webDriver.close();
-			}
-		}
-		catch (Exception e)
-		{
-			throw new ProductException("Something went wrong, Please try again");
+			System.err.println("Oops!! Something went wrong while to load the page.");
+            throw new ProductException("Oops!! Something went wrong while to load the page.");
 		}
 
 		return productDatas;
+
 	}
 
+	@Override
+	public Results calculateTotalsOfProductDatas(final List<ProductData> productDatas)
+	{
+		Results results = new Results();
+
+		double totalAmt = 0.0;
+		for (ProductData productData : productDatas)
+		{
+
+            try {
+                totalAmt += Double.valueOf(productData.getUnitPrice()).doubleValue();
+            } catch (NumberFormatException e)
+            {
+                throw new NumberFormatException();
+            }
+        }
+		results.setTotal(String.format("%.2f", totalAmt));
+		results.setResults(productDatas);
+
+		return results;
+	}
 
 	/**
-	 * Validates input URL whether its valid or not
+	 * Get the products Information
 	 * 
-	 * @param inputUrl
-	 * @return <true>If its a invalid url </true> otherwise <false>Valid url</false>
+	 * @param driver
+	 * @return
 	 */
-	public boolean isUrlInValid(final String inputUrl)
+	private List<WebElement> getListOfProducts(WebDriver driver)
 	{
-		boolean urlInValid = false;
-		try
-		{
-			URL url = new URL(inputUrl);
-			URLConnection conn = url.openConnection();
-			conn.connect();
+		List<WebElement> elements = driver.findElements(By.className(PRODUCT));
+		return elements;
+	}
 
-		}
-		catch (MalformedURLException e)
+	/**
+	 * Gets the Unit Price of the products
+	 * 
+	 * @param webElement
+	 * @return Price of unit
+	 */
+	private String getUnitPrice(WebElement webElement)
+	{
+		final String unitPriceOfProduct = webElement.findElement(By.className(PRICE_PER_UNIT)).getText();
+
+		return unitPriceOfProduct.substring(1, unitPriceOfProduct.indexOf(UNIT));
+	}
+
+	/**
+	 * Get the size of product Image
+	 * 
+	 * @param driver
+	 * @return
+	 * @throws IOException
+	 * @throws InterruptedException
+	 */
+	private String getProductImageFileSize(WebDriver driver) throws IOException, InterruptedException
+	{
+
+		File fileSize = new File("fileSize.txt");
+
+		// File doesn't exists then create a new file
+		if (!fileSize.exists())
 		{
-			urlInValid = true;
+			fileSize.createNewFile();
 		}
-		catch (IOException e)
-		{
-			urlInValid = true;
-		}
-		return urlInValid;
+
+		FileWriter fileWriter = new FileWriter(fileSize.getAbsoluteFile());
+		BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+		bufferedWriter.write(driver.getPageSource());
+		bufferedWriter.close();
+
+		double sizeOfFileInKb = fileSize.length() / 1024;
+		fileSize.delete();
+
+
+		return String.format("%.2f", sizeOfFileInKb) + KB;
 	}
 
 }
